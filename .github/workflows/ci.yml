@@ -23,7 +23,7 @@ jobs:
           pip install -r backend/requirements-ci.txt
 
       - name: Ruff lint
-        run: ruff check backend
+        run: ruff check .
 
-      - name: Pytest smoke test
-        run: pytest -q backend/tests/test_api.py
+      - name: Pytest
+        run: pytest backend/tests/ -q --tb=short
