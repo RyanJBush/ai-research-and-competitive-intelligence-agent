@@ -1,63 +1,65 @@
 # AI Research & Competitive Intelligence Agent
 
-This project is a recruiter-ready portfolio implementation of an **AI Research & Competitive Intelligence Agent** that turns a broad question into a structured, evidence-linked research report. It demonstrates practical LLM workflow design with planning, source discovery, extraction, validation heuristics, summarization, and report generation. The system is built to support transparent decision-making and faster analyst workflows while keeping a human reviewer in the loop.
+## Executive Summary
+This project is a recruiter-ready **AI Research & Competitive Intelligence Agent** that automates a multi-stage research workflow from user query to structured report output. It demonstrates practical LLM-style orchestration patterns in Python, including planning, source discovery, extraction, validation heuristics, summarization, and report generation. The system includes a FastAPI backend, a React frontend, and a deterministic CLI demo for portfolio demonstration and technical interviews.
 
-## Business / Research Problem This Project Solves
-Analysts and AI teams often spend significant time manually breaking down ambiguous questions, collecting scattered sources, and assembling findings into decision-ready outputs. This project automates that research pipeline by decomposing queries, collecting candidate sources, extracting content, and producing structured report artifacts with confidence and coverage signals. The result is a repeatable workflow for competitive intelligence and technical research drafts that improves speed, consistency, and traceability.
+## Business/Research Problem This Project Solves
+AI, data, and business teams often spend too much time manually breaking down broad questions, gathering scattered sources, and assembling findings into usable outputs. This project standardizes that process by turning one query into a traceable workflow with source filtering, contradiction detection, confidence scoring, and structured reporting. It helps teams produce faster first-pass research drafts that are easier to review and refine.
 
 ## Key Features
-- **Automated research planning:** Generates structured sub-questions, objectives, and expected source types from a user query.
-- **Iterative retrieval workflow:** Expands search queries and can generate follow-up queries based on unsupported claims.
-- **Live lightweight source discovery:** Uses DuckDuckGo Instant Answer API and Wikipedia OpenSearch for candidate URL retrieval.
-- **Content extraction stage:** Pulls page title/content payloads for downstream analysis.
-- **Credibility and quality heuristics:** Applies source validation, credibility scoring, contradiction checks, and evidence coverage signals.
-- **LLM-style synthesis outputs:** Produces executive summaries, findings, open questions, and conclusions in structured report format.
-- **Citation-linked reporting:** Builds claim support objects and source evidence tables for auditability.
-- **PII-aware processing hooks:** Includes redaction support integrated into the orchestration layer.
-- **Traceable orchestration:** Persists stage events, metrics, and run artifacts for replay and review.
-- **Multiple interfaces:** Deterministic CLI demo pipeline plus FastAPI backend and React frontend for interactive usage.
+- **Research plan generation:** Decomposes a query into sub-questions with objectives and expected source types.
+- **Automated source discovery:** Searches via DuckDuckGo Instant Answer API and Wikipedia OpenSearch.
+- **Web content extraction:** Pulls page title and paragraph content from discovered URLs.
+- **Validation and filtering:** Applies domain allow/deny lists, deduplication, prompt-injection signal checks, and minimum content thresholds.
+- **Credibility scoring:** Assigns source type, credibility score, and confidence label using heuristic scoring.
+- **Contradiction detection:** Flags potentially conflicting claims and assigns severity levels.
+- **PII-aware processing:** Redacts emails, phone numbers, and SSN patterns before storage/reporting.
+- **Structured outputs:** Produces executive summary, findings, evidence table, open questions, contradictions, and conclusion in a report schema.
+- **Citation excerpts:** Builds citation markers and excerpts linked to source records.
+- **Traceability and observability:** Stores stage-level trace events, per-agent run metrics, and aggregate research metrics.
+- **Iteration controls:** Supports configurable depth/breadth/max sources and optional refinement passes when confidence is low.
+- **Multiple interfaces:** Includes REST API endpoints, React UI, and a local demo pipeline script.
 
 ## Tech Stack
-- **Language:** Python (backend and pipeline scripts), JavaScript (frontend).
-- **Backend framework:** FastAPI + SQLAlchemy.
-- **Frontend:** React + Vite.
-- **LLM workflow ecosystem:** LangChain core/community dependencies in project stack.
-- **Data/runtime:** PostgreSQL-compatible database configuration and Docker Compose local runtime.
-- **Testing:** Pytest-based backend test suite.
+- **Backend:** Python 3.11+, FastAPI, SQLAlchemy, Pydantic
+- **Frontend:** React, Vite, Tailwind CSS
+- **Data layer:** PostgreSQL (via psycopg), Docker Compose for local orchestration
+- **Research tooling:** requests, BeautifulSoup4
+- **LLM workflow ecosystem:** langchain-core, langchain-community, FAISS-backed memory store
+- **Quality tooling:** pytest, ruff, ESLint, Prettier
 
 ## Agent Workflow Overview
-The orchestration pipeline in `ResearchService` follows these stages:
-1. **Planning** — create a structured research plan from the query.
-2. **Searching** — generate search variants and collect candidate URLs.
-3. **Extracting** — fetch and normalize source content payloads.
-4. **Validating** — score source quality and detect contradictions.
-5. **Synthesizing** — generate summary/report outputs with evidence links.
+1. **Planning** – Build a structured plan from the query.
+2. **Searching** – Generate query variants and collect candidate URLs.
+3. **Extracting** – Fetch and normalize source content.
+4. **Validating** – Filter sources, score credibility, and detect contradictions.
+5. **Synthesizing** – Build structured report outputs and summary text.
 
-This design mirrors real-world AI agent patterns: decomposition, tool use, evaluation, and structured generation.
+The backend records trace events and agent metrics across these stages for replay and analysis.
 
 ## Input-to-Output Process
-**Input:**
-- User research query
-- Optional controls such as depth, breadth, recency window, source caps, and allow/deny domain lists
+**Input**
+- Research query
+- Optional controls: depth, breadth, recency window, max sources, allow/deny domains, confidence threshold
 
-**Processing:**
-- Query decomposition and sub-question generation
-- Search query expansion and source collection
-- Source extraction and filtering
-- Credibility, contradiction, and evidence-coverage analysis
-- Citation/report assembly
+**Processing**
+- Query decomposition into plan steps
+- Search query expansion and URL discovery
+- HTML extraction and text normalization
+- Source validation, credibility scoring, contradiction checks, and PII redaction
+- Citation extraction and report assembly
 
-**Output:**
-- Structured research report (JSON/markdown-ready)
-- Executive summary and findings with confidence levels
-- Evidence table, contradictions, open questions, and conclusion
-- Run traces/metrics for observability
+**Output**
+- Structured report object (JSON) with executive summary, findings, evidence table, contradictions, open questions, and conclusion
+- Human-readable summary text
+- Exportable report formats via API (JSON, Markdown, PDF)
+- Trace timeline and metrics endpoints for run diagnostics
 
 ## Setup and Installation
 ### 1) Clone and install dependencies
 ```bash
-git clone https://github.com/RyanJBush/Autonomous-research-and-intelligence-agent.git
-cd Autonomous-research-and-intelligence-agent
+git clone https://github.com/RyanJBush/ai-research-and-competitive-intelligence-agent.git
+cd ai-research-and-competitive-intelligence-agent
 make backend-install
 make frontend-install
 ```
@@ -67,15 +69,16 @@ Create `backend/.env`:
 ```env
 ASTRA_DATABASE_URL=postgresql+psycopg://astra:astra@localhost:5432/astra
 ASTRA_JWT_SECRET=change-me-for-local-dev
+ASTRA_DAILY_RESEARCH_QUOTA=20
 ```
 
 ### 3) Run locally
-**Deterministic CLI demo (sample data):**
+**CLI demo (sample data pipeline):**
 ```bash
 python scripts/demo_pipeline.py
 ```
 
-**Full local app (API + UI):**
+**Full app (Postgres + API + UI):**
 ```bash
 docker compose up --build
 ```
@@ -83,34 +86,27 @@ docker compose up --build
 - API docs: `http://localhost:8000/docs`
 
 ## Example Use Cases
-- Competitive landscape research brief generation
-- AI engineering trend scans (tools, architectures, benchmarks)
-- Data/business analytics exploratory research summaries
-- First-pass evidence gathering for product or strategy memos
-- Workflow automation demos for analyst productivity portfolios
+- Competitive intelligence briefs for AI products and vendors
+- AI engineering research on tools, model practices, and governance trends
+- Business analytics background research to support strategy memos
+- Data analysis scoping by collecting and comparing external evidence sources
+- Workflow automation demonstrations for analyst/research productivity
 
 ## Skills Demonstrated
-- Multi-stage AI workflow orchestration
-- Prompt and query decomposition strategies
-- Information extraction and normalization pipelines
-- Summarization and structured report generation
-- Evidence/credibility heuristic design
-- API-first backend engineering with typed schemas
-- Human-in-the-loop reliability framing and AI safety mindset
-- Reproducible demos and test-driven backend development
+- Multi-stage AI workflow orchestration and stateful pipeline design
+- Prompt/query decomposition and iterative retrieval strategy
+- Information extraction, normalization, and heuristic validation
+- Structured report generation with confidence and evidence signals
+- Prompt-injection-aware filtering and basic PII redaction integration
+- Python backend engineering with typed schemas and service-layer architecture
+- API design, frontend integration, and reproducible local development setup
 
 ## Resume-Ready Project Description
-Built an **AI Research & Competitive Intelligence Agent** that automates question decomposition, source discovery, extraction, validation, and structured report generation. Engineered a Python/FastAPI + React system with traceable pipeline stages, credibility/coverage heuristics, contradiction checks, and citation-linked outputs to accelerate research workflows for AI engineering, data analysis, business analytics, and automation use cases.
+Built an **AI Research & Competitive Intelligence Agent** using Python, FastAPI, SQLAlchemy, and React to automate research planning, source discovery, extraction, validation, and structured report generation. Implemented credibility scoring, contradiction detection, citation excerpting, PII redaction hooks, and traceable stage metrics to improve consistency and speed for AI engineering, data analysis, business analytics, and workflow automation research tasks.
 
 ## Future Improvements
-- Add broader, configurable retrieval connectors beyond current lightweight APIs.
-- Integrate stronger ranking/reranking and deduplication strategies.
-- Expand extraction robustness for diverse content formats.
-- Add evaluation datasets and regression benchmarks for report quality.
-- Improve interactive analyst controls for review, approval, and feedback loops.
-- Introduce role-based workflow templates for domain-specific research tasks.
-
-## Important Limitations
-- This system provides draft research outputs and heuristic confidence signals, not guaranteed truth.
-- Live retrieval is lightweight and may miss important or higher-quality evidence.
-- Human verification is required before using outputs for real decisions.
+- Add more retrieval connectors beyond current Wikipedia/DDG-based discovery.
+- Improve extraction quality for complex page layouts and non-HTML sources.
+- Add benchmark datasets and automated evaluation for report quality.
+- Expand analyst controls for human review workflows and approvals.
+- Strengthen ranking/reranking and source deduplication strategies.
