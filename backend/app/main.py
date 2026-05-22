@@ -1,8 +1,11 @@
 import json
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse, Response
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -90,7 +93,7 @@ def create_research(
     user: User = Depends(require_role("admin", "researcher")),
 ) -> ResearchResult:
     _enforce_daily_quota(db, user.id)
-    research, summary, citations, iterations, final_confidence = app.state.research_service.run(
+    run_result = app.state.research_service.run(
         db,
         user.id,
         payload.query,
@@ -104,6 +107,9 @@ def create_research(
         deny_domains=payload.deny_domains,
         confidence_threshold=payload.confidence_threshold,
     )
+    research, summary, citations, *metrics = run_result
+    iterations = int(metrics[0]) if len(metrics) > 0 else 1
+    final_confidence = float(metrics[1]) if len(metrics) > 1 else 0.0
     _log_audit(db, user, "research.create", "research_session", research.id, payload.query)
     report = json.loads(summary.structured_report) if summary.structured_report else {}
     return ResearchResult(
@@ -148,7 +154,7 @@ def retry_research(
 ) -> ResearchResult:
     previous = _get_research_or_404(db, research_id, user.id)
     _enforce_daily_quota(db, user.id)
-    research, summary, citations, iterations, final_confidence = app.state.research_service.run(
+    run_result = app.state.research_service.run(
         db,
         user.id,
         previous.query,
@@ -157,6 +163,9 @@ def retry_research(
         parent_session_id=previous.id,
         version=previous.version + 1,
     )
+    research, summary, citations, *metrics = run_result
+    iterations = int(metrics[0]) if len(metrics) > 0 else 1
+    final_confidence = float(metrics[1]) if len(metrics) > 1 else 0.0
     _log_audit(
         db,
         user,
@@ -185,7 +194,7 @@ def refine_research(
 ) -> ResearchResult:
     previous = _get_research_or_404(db, research_id, user.id)
     _enforce_daily_quota(db, user.id)
-    research, summary, citations, iterations, final_confidence = app.state.research_service.run(
+    run_result = app.state.research_service.run(
         db,
         user.id,
         payload.query,
@@ -200,6 +209,9 @@ def refine_research(
         parent_session_id=previous.id,
         version=previous.version + 1,
     )
+    research, summary, citations, *metrics = run_result
+    iterations = int(metrics[0]) if len(metrics) > 0 else 1
+    final_confidence = float(metrics[1]) if len(metrics) > 1 else 0.0
     _log_audit(
         db,
         user,
@@ -401,7 +413,7 @@ def list_audit_logs(
     )
 
 
-@app.get("/reports/{report_id}/export")
+@app.get("/api/research/{report_id}/export")
 def export_research_report(
     report_id: int,
     format: str = "markdown",
@@ -409,20 +421,29 @@ def export_research_report(
     user: User = Depends(get_current_user),
 ):
     _validate_research_owner(db, report_id, user.id)
-    summary = db.query(Summary).filter(Summary.report_id == report_id).first()
+    summary = db.query(Summary).filter(Summary.research_id == report_id).first()
     if summary is None or not summary.structured_report:
         raise HTTPException(status_code=404, detail="Report not found")
     report = json.loads(summary.structured_report)
     if format == "markdown":
         research = _get_research_or_404(db, report_id, user.id)
-        metadata = {"timestamp": datetime.now(timezone.utc).isoformat(), "query": research.query, "agent_version": "europa-1.0"}
+        metadata = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "query": research.query,
+            "agent_version": "europa-1.0",
+        }
         markdown = app.state.research_service.report_builder.to_markdown(report)
-        return PlainTextResponse(f"# {research.query}\n\n> Generated: {metadata['timestamp']}\n> Agent Version: {metadata['agent_version']}\n\n" + markdown, media_type="text/markdown")
+        response_body = (
+            f"# {research.query}\n\n"
+            f"> Generated: {metadata['timestamp']}\n"
+            f"> Agent Version: {metadata['agent_version']}\n\n"
+            f"{markdown}"
+        )
+        return PlainTextResponse(response_body, media_type="text/markdown")
+    if format == "json":
+        return report
     if format == "pdf":
         try:
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
-            from io import BytesIO
             research = _get_research_or_404(db, report_id, user.id)
             md = app.state.research_service.report_builder.to_markdown(report)
             buf = BytesIO()
@@ -439,7 +460,7 @@ def export_research_report(
             c.save()
             return Response(content=buf.getvalue(), media_type="application/pdf")
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"PDF export failed: {exc}")
+            raise HTTPException(status_code=500, detail=f"PDF export failed: {exc}") from exc
     raise HTTPException(status_code=400, detail="Unsupported export format")
 
 
