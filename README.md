@@ -1,78 +1,60 @@
-# Europa — Student-Built Research Assistant Demo (LangChain-Powered LLM Agent)
+# AI Research & Competitive Intelligence Agent
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-research--agent.onrender.com-46a2f1?logo=render&logoColor=white)](https://research-agent.onrender.com)
+This project is a recruiter-ready portfolio implementation of an **AI Research & Competitive Intelligence Agent** that turns a broad question into a structured, evidence-linked research report. It demonstrates practical LLM workflow design with planning, source discovery, extraction, validation heuristics, summarization, and report generation. The system is built to support transparent decision-making and faster analyst workflows while keeping a human reviewer in the loop.
 
-Europa is a portfolio project by a **University of Maryland student studying Information Science and Electrical Engineering with a Business minor**. It demonstrates an agent-style research workflow that turns a question into a source-linked draft response.
+## Business / Research Problem This Project Solves
+Analysts and AI teams often spend significant time manually breaking down ambiguous questions, collecting scattered sources, and assembling findings into decision-ready outputs. This project automates that research pipeline by decomposing queries, collecting candidate sources, extracting content, and producing structured report artifacts with confidence and coverage signals. The result is a repeatable workflow for competitive intelligence and technical research drafts that improves speed, consistency, and traceability.
 
-Built around a **LangChain-based agent architecture** (`langchain-core` + `langchain-community`) with configurable model/provider wiring for LLM-backed synthesis.
+## Key Features
+- **Automated research planning:** Generates structured sub-questions, objectives, and expected source types from a user query.
+- **Iterative retrieval workflow:** Expands search queries and can generate follow-up queries based on unsupported claims.
+- **Live lightweight source discovery:** Uses DuckDuckGo Instant Answer API and Wikipedia OpenSearch for candidate URL retrieval.
+- **Content extraction stage:** Pulls page title/content payloads for downstream analysis.
+- **Credibility and quality heuristics:** Applies source validation, credibility scoring, contradiction checks, and evidence coverage signals.
+- **LLM-style synthesis outputs:** Produces executive summaries, findings, open questions, and conclusions in structured report format.
+- **Citation-linked reporting:** Builds claim support objects and source evidence tables for auditability.
+- **PII-aware processing hooks:** Includes redaction support integrated into the orchestration layer.
+- **Traceable orchestration:** Persists stage events, metrics, and run artifacts for replay and review.
+- **Multiple interfaces:** Deterministic CLI demo pipeline plus FastAPI backend and React frontend for interactive usage.
 
-## What Europa is (and is not)
-- **Is:** a demo research assistant that shows planning, retrieval, synthesis, and report generation.
-- **Is not:** a fact-checking service or a guarantee of correctness.
-- **Intended use:** portfolio/interview review of system design, API engineering, and transparent AI workflow decisions.
+## Tech Stack
+- **Language:** Python (backend and pipeline scripts), JavaScript (frontend).
+- **Backend framework:** FastAPI + SQLAlchemy.
+- **Frontend:** React + Vite.
+- **LLM workflow ecosystem:** LangChain core/community dependencies in project stack.
+- **Data/runtime:** PostgreSQL-compatible database configuration and Docker Compose local runtime.
+- **Testing:** Pytest-based backend test suite.
 
-## How It Works
-1. **User submits research query**.
-2. **Agent decomposes the request into sub-questions** for coverage and planning.
-3. **Web search/retrieval tooling gathers candidate sources** (or deterministic sample sources in demo mode).
-4. **Validator scores source credibility** and identifies quality signals.
-5. **Summarizer synthesizes a draft answer** from retrieved evidence.
-6. **Citation report is generated** so claims remain traceable to sources.
+## Agent Workflow Overview
+The orchestration pipeline in `ResearchService` follows these stages:
+1. **Planning** — create a structured research plan from the query.
+2. **Searching** — generate search variants and collect candidate URLs.
+3. **Extracting** — fetch and normalize source content payloads.
+4. **Validating** — score source quality and detect contradictions.
+5. **Synthesizing** — generate summary/report outputs with evidence links.
 
-## Retrieval mode (explicit)
-Europa supports two retrieval modes:
+This design mirrors real-world AI agent patterns: decomposition, tool use, evaluation, and structured generation.
 
-1. **Static sample-data mode (default for demos)**
-   - `scripts/demo_pipeline.py` reads from `data/sample/sample_sources.json`.
-   - No live web calls.
-   - Best for repeatable walkthroughs.
+## Input-to-Output Process
+**Input:**
+- User research query
+- Optional controls such as depth, breadth, recency window, source caps, and allow/deny domain lists
 
-2. **Live lightweight web retrieval (optional)**
-   - Backend search service can call **Wikipedia OpenSearch** and **DuckDuckGo Instant Answer**.
-   - Useful to demonstrate retrieval plumbing, but coverage/quality varies.
+**Processing:**
+- Query decomposition and sub-question generation
+- Search query expansion and source collection
+- Source extraction and filtering
+- Credibility, contradiction, and evidence-coverage analysis
+- Citation/report assembly
 
-> In short: portfolio demos are usually run in **static sample-data mode**, with **optional live API retrieval** when you want to show networked search behavior.
+**Output:**
+- Structured research report (JSON/markdown-ready)
+- Executive summary and findings with confidence levels
+- Evidence table, contradictions, open questions, and conclusion
+- Run traces/metrics for observability
 
-## Pipeline overview
-Europa follows a simple pipeline:
-
-**Search → Retrieve → Synthesize → Output**
-
-Supporting capabilities include source cards, confidence heuristics, contradiction/coverage signals, and trace events for review.
-
-## Example Output
-See [`examples/sample_output.md`](examples/sample_output.md) for a full example run.
-
-```text
-Query: What are the latest developments in RAG systems as of 2025?
-Sub-questions:
-  1) Which architecture changes improved retrieval quality?
-  2) What evaluation benchmarks are commonly used?
-  3) How are teams reducing hallucinations in production?
-
-Summary (excerpt):
-Modern RAG systems increasingly combine hybrid retrieval, reranking, and structured grounding
-workflows. Production teams are using citation-first generation patterns, guardrail validators,
-and offline + online evaluation loops to improve factuality and reliability.
-```
-
-## Repo Topics (for GitHub Settings)
-To keep repository metadata aligned, set these GitHub topics:
-- `langchain`
-- `openai` (if using OpenAI models/providers in deployment)
-- `web-search`
-- `retrieval`
-
-## Limitations (read first)
-- Outputs may be incomplete, outdated, or wrong.
-- LLM-generated synthesis can hallucinate or misinterpret sources.
-- Confidence/validation signals are heuristics, not proof.
-- Live retrieval connectors are lightweight and may miss important evidence.
-- **Human verification is required before using results for real decisions.**
-
-## Quick start
-
-### 1) Clone and install
+## Setup and Installation
+### 1) Clone and install dependencies
 ```bash
 git clone https://github.com/RyanJBush/Autonomous-research-and-intelligence-agent.git
 cd Autonomous-research-and-intelligence-agent
@@ -80,43 +62,55 @@ make backend-install
 make frontend-install
 ```
 
-### 2) Configure environment and secrets
-Create `backend/.env` with at least:
+### 2) Configure backend environment
+Create `backend/.env`:
 ```env
 ASTRA_DATABASE_URL=postgresql+psycopg://astra:astra@localhost:5432/astra
 ASTRA_JWT_SECRET=change-me-for-local-dev
 ```
 
-For a Docker-only local demo, `docker-compose.yml` already sets default local environment values.
-
-### 3) Run a local demo
-
-#### Option A (recommended): deterministic CLI demo
+### 3) Run locally
+**Deterministic CLI demo (sample data):**
 ```bash
 python scripts/demo_pipeline.py
 ```
 
-#### Option B: local web UI + API
+**Full local app (API + UI):**
 ```bash
 docker compose up --build
 ```
-- UI: `http://localhost:5173`
+- Frontend: `http://localhost:5173`
 - API docs: `http://localhost:8000/docs`
 
-## Example research session (deterministic demo)
-1. Run `python scripts/demo_pipeline.py`.
-2. Enter a research question when prompted.
-3. Review produced source list and synthesized report draft.
-4. Manually verify important claims against trusted sources.
+## Example Use Cases
+- Competitive landscape research brief generation
+- AI engineering trend scans (tools, architectures, benchmarks)
+- Data/business analytics exploratory research summaries
+- First-pass evidence gathering for product or strategy memos
+- Workflow automation demos for analyst productivity portfolios
 
-## Portfolio Preview and screenshots
-- Portfolio Preview page: `docs/preview/index.html`
-- Screenshot guide: `docs/screenshots/README.md`
-- Architecture: `docs/architecture.md`
-- Demo runbook: `docs/demo-runbook.md`
+## Skills Demonstrated
+- Multi-stage AI workflow orchestration
+- Prompt and query decomposition strategies
+- Information extraction and normalization pipelines
+- Summarization and structured report generation
+- Evidence/credibility heuristic design
+- API-first backend engineering with typed schemas
+- Human-in-the-loop reliability framing and AI safety mindset
+- Reproducible demos and test-driven backend development
 
-## Resume bullets
-See `docs/resume-bullets.md`.
+## Resume-Ready Project Description
+Built an **AI Research & Competitive Intelligence Agent** that automates question decomposition, source discovery, extraction, validation, and structured report generation. Engineered a Python/FastAPI + React system with traceable pipeline stages, credibility/coverage heuristics, contradiction checks, and citation-linked outputs to accelerate research workflows for AI engineering, data analysis, business analytics, and automation use cases.
 
-## License
-MIT (see `LICENSE`).
+## Future Improvements
+- Add broader, configurable retrieval connectors beyond current lightweight APIs.
+- Integrate stronger ranking/reranking and deduplication strategies.
+- Expand extraction robustness for diverse content formats.
+- Add evaluation datasets and regression benchmarks for report quality.
+- Improve interactive analyst controls for review, approval, and feedback loops.
+- Introduce role-based workflow templates for domain-specific research tasks.
+
+## Important Limitations
+- This system provides draft research outputs and heuristic confidence signals, not guaranteed truth.
+- Live retrieval is lightweight and may miss important or higher-quality evidence.
+- Human verification is required before using outputs for real decisions.
