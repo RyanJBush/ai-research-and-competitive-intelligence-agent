@@ -1,11 +1,23 @@
-# Europa — Student-Built Research Assistant Demo
+# Europa — Student-Built Research Assistant Demo (LangChain-Powered LLM Agent)
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-research--agent.onrender.com-46a2f1?logo=render&logoColor=white)](https://research-agent.onrender.com)
 
 Europa is a portfolio project by a **University of Maryland student studying Information Science and Electrical Engineering with a Business minor**. It demonstrates an agent-style research workflow that turns a question into a source-linked draft response.
+
+Built around a **LangChain-based agent architecture** (`langchain-core` + `langchain-community`) with configurable model/provider wiring for LLM-backed synthesis.
 
 ## What Europa is (and is not)
 - **Is:** a demo research assistant that shows planning, retrieval, synthesis, and report generation.
 - **Is not:** a fact-checking service or a guarantee of correctness.
 - **Intended use:** portfolio/interview review of system design, API engineering, and transparent AI workflow decisions.
+
+## How It Works
+1. **User submits research query**.
+2. **Agent decomposes the request into sub-questions** for coverage and planning.
+3. **Web search/retrieval tooling gathers candidate sources** (or deterministic sample sources in demo mode).
+4. **Validator scores source credibility** and identifies quality signals.
+5. **Summarizer synthesizes a draft answer** from retrieved evidence.
+6. **Citation report is generated** so claims remain traceable to sources.
 
 ## Retrieval mode (explicit)
 Europa supports two retrieval modes:
@@ -27,6 +39,29 @@ Europa follows a simple pipeline:
 **Search → Retrieve → Synthesize → Output**
 
 Supporting capabilities include source cards, confidence heuristics, contradiction/coverage signals, and trace events for review.
+
+## Example Output
+See [`examples/sample_output.md`](examples/sample_output.md) for a full example run.
+
+```text
+Query: What are the latest developments in RAG systems as of 2025?
+Sub-questions:
+  1) Which architecture changes improved retrieval quality?
+  2) What evaluation benchmarks are commonly used?
+  3) How are teams reducing hallucinations in production?
+
+Summary (excerpt):
+Modern RAG systems increasingly combine hybrid retrieval, reranking, and structured grounding
+workflows. Production teams are using citation-first generation patterns, guardrail validators,
+and offline + online evaluation loops to improve factuality and reliability.
+```
+
+## Repo Topics (for GitHub Settings)
+To keep repository metadata aligned, set these GitHub topics:
+- `langchain`
+- `openai` (if using OpenAI models/providers in deployment)
+- `web-search`
+- `retrieval`
 
 ## Limitations (read first)
 - Outputs may be incomplete, outdated, or wrong.
